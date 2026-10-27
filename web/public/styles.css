@@ -1,0 +1,191 @@
+:root {
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-display: "Outfit", var(--font-body);
+  --text: #f8fafc;
+  --text-muted: #cbd5e1;
+  --accent: #818cf8;
+  --accent-2: #22d3ee;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--text);
+  background: linear-gradient(160deg, #0f172a 0%, #312e81 50%, #0e7490 100%);
+  background-attachment: fixed;
+}
+
+.bg-blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-blob-a {
+  width: 280px;
+  height: 280px;
+  background: var(--accent);
+  top: -40px;
+  right: -20px;
+}
+
+.bg-blob-b {
+  width: 260px;
+  height: 260px;
+  background: var(--accent-2);
+  bottom: -30px;
+  left: -20px;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.page-help {
+  max-width: 36rem;
+}
+
+.page-nav {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #c7d2fe;
+  text-decoration: none;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(129, 140, 248, 0.12);
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  margin: 0 0 0.35rem;
+}
+
+.tagline {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.85rem;
+  backdrop-filter: blur(8px);
+}
+
+.field {
+  display: block;
+  margin-bottom: 0.65rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+input[type="text"] {
+  width: 100%;
+  font: inherit;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.5);
+  color: var(--text);
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #818cf8, #22d3ee);
+  color: #0f172a;
+}
+
+.room-status {
+  margin: 0.65rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.messages {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.messages li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.send-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.send-row input {
+  flex: 1;
+}
+
+.error {
+  margin: 0.5rem 0 0;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.log-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.log-events {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.help h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.help p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.help + .help {
+  margin-top: 0.75rem;
+}
