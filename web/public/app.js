@@ -9,11 +9,15 @@ const sendForm = document.getElementById("send-form");
 const messageInput = document.getElementById("message-input");
 const errorEl = document.getElementById("error-text");
 const logEvents = document.getElementById("log-events");
+const selfBadgeEl = document.getElementById("self-badge");
 
 const SESSION_KEY = "chat-room-v1";
 
+const PARTICIPANT_SYMBOLS = ["◆", "●", "▲", "■", "★", "✦", "◇", "◎", "♣", "♠"];
+
 let socket = null;
 let currentRoom = "";
+let myNickname = "";
 
 function persistState() {
   AppSession.save(SESSION_KEY, {
@@ -36,22 +40,97 @@ AppSession.wireHelpSave(SESSION_KEY, () => ({
   currentRoom,
 }));
 
+function hashName(name) {
+  let h = 0;
+  const s = String(name || "Guest");
+  for (let i = 0; i < s.length; i += 1) {
+    h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+/** Stable color + symbol for a display name (same name → same badge everywhere). */
+function participantStyle(name) {
+  const h = hashName(name);
+  const symbol = PARTICIPANT_SYMBOLS[h % PARTICIPANT_SYMBOLS.length];
+  const hue = h % 360;
+  return {
+    symbol,
+    hue,
+    bg: `hsla(${hue}, 65%, 42%, 0.35)`,
+    border: `hsl(${hue}, 70%, 55%)`,
+    text: `hsl(${hue}, 85%, 78%)`,
+  };
+}
+
 function setError(message) {
   errorEl.hidden = !message;
   errorEl.textContent = message || "";
 }
 
-function appendMessage(text) {
+function normalizeMessage(msg) {
+  if (msg && typeof msg === "object" && msg.text != null) {
+    return { author: msg.author || "Guest", text: String(msg.text) };
+  }
+  return { author: "Guest", text: String(msg) };
+}
+
+function renderBadge(name, compact) {
+  const style = participantStyle(name);
+  const el = document.createElement("span");
+  el.className = compact ? "msg-badge msg-badge-sm" : "msg-badge";
+  el.style.background = style.bg;
+  el.style.borderColor = style.border;
+  el.style.color = style.text;
+  el.textContent = style.symbol;
+  el.title = name;
+  el.setAttribute("aria-hidden", "true");
+  return el;
+}
+
+function appendMessage(msg) {
+  const { author, text } = normalizeMessage(msg);
   const li = document.createElement("li");
-  li.textContent = text;
+  li.className = "msg-item";
+
+  const row = document.createElement("div");
+  row.className = "msg-row";
+
+  row.appendChild(renderBadge(author));
+  const meta = document.createElement("span");
+  meta.className = "msg-author";
+  meta.style.color = participantStyle(author).text;
+  meta.textContent = author;
+  row.appendChild(meta);
+
+  const body = document.createElement("p");
+  body.className = "msg-text";
+  body.textContent = text;
+
+  li.appendChild(row);
+  li.appendChild(body);
   messagesEl.appendChild(li);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 function appendLog(entry) {
   const li = document.createElement("li");
-  li.textContent = `${entry.user} joined at ${new Date(entry.time).toLocaleTimeString()}`;
+  li.className = "log-item";
+  li.appendChild(renderBadge(entry.user, true));
+  const span = document.createElement("span");
+  span.textContent = `${entry.user} joined at ${new Date(entry.time).toLocaleTimeString()}`;
+  li.appendChild(span);
   logEvents.appendChild(li);
+}
+
+function updateSelfBadge(name) {
+  if (!selfBadgeEl) return;
+  selfBadgeEl.innerHTML = "";
+  selfBadgeEl.appendChild(renderBadge(name));
+  const label = document.createElement("span");
+  label.className = "self-badge-label";
+  label.textContent = `Your marker: ${name}`;
+  selfBadgeEl.appendChild(label);
 }
 
 function connectSocket() {
@@ -83,10 +162,13 @@ function joinRoom() {
 
   const s = connectSocket();
   currentRoom = room;
-  s.emit("joinRoom", room);
+  myNickname = nick;
+  s.emit("joinRoom", { room, nickname: nick });
   s.emit("loggedOn", nick);
 
-  roomStatus.textContent = `Connected to room “${room}” as ${nick}`;
+  updateSelfBadge(nick);
+  selfBadgeEl.hidden = false;
+  roomStatus.textContent = `Connected to room “${room}”`;
   chatPanel.hidden = false;
   logPanel.hidden = false;
   messageInput.focus();

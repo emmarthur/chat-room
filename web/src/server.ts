@@ -3,7 +3,7 @@ import { createServer } from "http";
 import path from "path";
 import { Server } from "socket.io";
 
-import { MessageStore } from "./chatCore";
+import { ChatMessagePayload, MessageStore } from "./chatCore";
 
 const PORT = Number(process.env.PORT) || 3029;
 const store = new MessageStore();
@@ -22,41 +22,59 @@ app.get("/help", (_req, res) => {
 
 io.on("connection", (socket) => {
   let lastRoom = "";
+  let displayName = "Guest";
 
-  socket.on("joinRoom", async (room: string) => {
-    if (lastRoom !== "") {
-      socket.leave(lastRoom);
-    }
-    if (room !== "") {
-      socket.join(room);
-    }
-    const msgs = await store.getAll(room);
-    socket.emit("allMessages", msgs);
-    lastRoom = room;
-  });
+  socket.on(
+    "joinRoom",
+    async (data: { room: string; nickname: string } | string) => {
+      const room = typeof data === "string" ? data : data.room;
+      if (typeof data === "object" && data.nickname?.trim()) {
+        displayName = data.nickname.trim();
+      }
+      if (lastRoom !== "") {
+        socket.leave(lastRoom);
+      }
+      if (room !== "") {
+        socket.join(room);
+      }
+      const msgs = await store.getAll(room);
+      socket.emit("allMessages", msgs);
+      lastRoom = room;
+    },
+  );
 
-  socket.on("message", async (msg: string) => {
-    await writeMessage(io, msg, lastRoom);
+  socket.on("message", async (text: string) => {
+    await writeMessage(io, text, lastRoom, displayName);
   });
 
   socket.on("loggedOn", (user: string) => {
+    if (user?.trim()) {
+      displayName = user.trim();
+    }
     if (lastRoom !== "") {
-      socket.to(lastRoom).emit("userLogOn", { user, time: new Date() });
+      socket.to(lastRoom).emit("userLogOn", { user: displayName, time: new Date() });
     }
   });
 });
 
-async function writeMessage(io: Server, message: string, room: string) {
+async function writeMessage(
+  io: Server,
+  message: string,
+  room: string,
+  author: string,
+) {
+  const payload: ChatMessagePayload = { author, text: message };
   await store.add({
     messageText: message,
+    author,
     received: new Date(),
     room,
   });
   if (room !== "") {
-    io.sockets.in(room).emit("message", message);
+    io.sockets.in(room).emit("message", payload);
     return;
   }
-  io.emit("message", message);
+  io.emit("message", payload);
 }
 
 httpServer.listen(PORT, () => {
